@@ -297,6 +297,15 @@ function values(){
 async function predict(){
   const f = values();
   if (Object.values(f).some(x=>!Number.isFinite(x))){ statusEl.textContent = 'Enter a number in every field.'; return; }
+  if (f.Weight <= 0 || f.Length <= 0){ statusEl.textContent = 'Weight and height must be above zero.'; return; }
+  const odd = [];
+  for (const c in inputs){
+    const i = inputs[c]; if (i.type === 'checkbox') continue;
+    const bad = f[c] < META.ranges[c][0] || f[c] > META.ranges[c][1];
+    i.style.borderColor = bad ? '#c0392b' : '';
+    if (bad) odd.push(LABEL[c] || c);
+  }
+  const warn = odd.length ? 'Outside the range seen in the training data: ' + odd.join(', ') + '. Treat this prediction as unreliable.' : '';
   try{
     const r = await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({features:f})});
     if (!r.ok) throw new Error('HTTP '+r.status);
@@ -304,7 +313,7 @@ async function predict(){
     EXPL = p.explanations || null;
     DELTA = PREV ? {LAD:p.LAD-PREV.LAD, LCX:p.LCX-PREV.LCX, RCA:p.RCA-PREV.RCA} : {};
     PREV = {LAD:p.LAD, LCX:p.LCX, RCA:p.RCA};
-    statusEl.textContent = '';
+    statusEl.textContent = warn;
     setRisk({LAD:p.LAD, LCX:p.LCX, RCA:p.RCA});
     const c = '#'+riskColor(p.CAD).getHexString();
     cadEl.innerHTML = `Overall CAD probability<br><b style="color:${c}">${Math.round(p.CAD*100)}%</b> ${level(p.CAD)}`;
