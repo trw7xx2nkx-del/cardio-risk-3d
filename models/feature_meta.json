@@ -1,0 +1,371 @@
+{
+ "columns": [
+  "Age",
+  "Weight",
+  "Length",
+  "Sex",
+  "BMI",
+  "DM",
+  "HTN",
+  "Current Smoker",
+  "EX-Smoker",
+  "FH",
+  "Obesity",
+  "CRF",
+  "CVA",
+  "Airway disease",
+  "Thyroid Disease",
+  "CHF",
+  "DLP",
+  "BP",
+  "PR",
+  "Edema",
+  "Weak Peripheral Pulse",
+  "Lung rales",
+  "Systolic Murmur",
+  "Diastolic Murmur",
+  "Typical Chest Pain",
+  "Dyspnea",
+  "Function Class",
+  "Atypical",
+  "Nonanginal",
+  "LowTH Ang",
+  "Q Wave",
+  "St Elevation",
+  "St Depression",
+  "Tinversion",
+  "LVH",
+  "Poor R Progression",
+  "FBS",
+  "CR",
+  "TG",
+  "LDL",
+  "HDL",
+  "BUN",
+  "ESR",
+  "HB",
+  "K",
+  "Na",
+  "WBC",
+  "Lymph",
+  "Neut",
+  "PLT",
+  "EF-TTE",
+  "Region RWMA",
+  "VHD",
+  "BBB_LBBB",
+  "BBB_RBBB"
+ ],
+ "defaults": {
+  "Age": 58.0,
+  "Weight": 74.0,
+  "Length": 165.0,
+  "Sex": 1.0,
+  "BMI": 26.775510204081634,
+  "DM": 0.0,
+  "HTN": 1.0,
+  "Current Smoker": 0.0,
+  "EX-Smoker": 0.0,
+  "FH": 0.0,
+  "Obesity": 1.0,
+  "CRF": 0.0,
+  "CVA": 0.0,
+  "Airway disease": 0.0,
+  "Thyroid Disease": 0.0,
+  "CHF": 0.0,
+  "DLP": 0.0,
+  "BP": 130.0,
+  "PR": 70.0,
+  "Edema": 0.0,
+  "Weak Peripheral Pulse": 0.0,
+  "Lung rales": 0.0,
+  "Systolic Murmur": 0.0,
+  "Diastolic Murmur": 0.0,
+  "Typical Chest Pain": 1.0,
+  "Dyspnea": 0.0,
+  "Function Class": 0.0,
+  "Atypical": 0.0,
+  "Nonanginal": 0.0,
+  "LowTH Ang": 0.0,
+  "Q Wave": 0.0,
+  "St Elevation": 0.0,
+  "St Depression": 0.0,
+  "Tinversion": 0.0,
+  "LVH": 0.0,
+  "Poor R Progression": 0.0,
+  "FBS": 98.0,
+  "CR": 1.0,
+  "TG": 122.0,
+  "LDL": 100.0,
+  "HDL": 39.0,
+  "BUN": 16.0,
+  "ESR": 15.0,
+  "HB": 13.2,
+  "K": 4.2,
+  "Na": 141.0,
+  "WBC": 7100.0,
+  "Lymph": 32.0,
+  "Neut": 60.0,
+  "PLT": 210.0,
+  "EF-TTE": 50.0,
+  "Region RWMA": 0.0,
+  "VHD": 1.0,
+  "BBB_LBBB": 0.0,
+  "BBB_RBBB": 0.0
+ },
+ "ranges": {
+  "Age": [
+   30.0,
+   86.0
+  ],
+  "Weight": [
+   48.0,
+   120.0
+  ],
+  "Length": [
+   140.0,
+   188.0
+  ],
+  "Sex": [
+   0.0,
+   1.0
+  ],
+  "BMI": [
+   18.115412710007302,
+   40.90065778377467
+  ],
+  "DM": [
+   0.0,
+   1.0
+  ],
+  "HTN": [
+   0.0,
+   1.0
+  ],
+  "Current Smoker": [
+   0.0,
+   1.0
+  ],
+  "EX-Smoker": [
+   0.0,
+   1.0
+  ],
+  "FH": [
+   0.0,
+   1.0
+  ],
+  "Obesity": [
+   0.0,
+   1.0
+  ],
+  "CRF": [
+   0.0,
+   1.0
+  ],
+  "CVA": [
+   0.0,
+   1.0
+  ],
+  "Airway disease": [
+   0.0,
+   1.0
+  ],
+  "Thyroid Disease": [
+   0.0,
+   1.0
+  ],
+  "CHF": [
+   0.0,
+   1.0
+  ],
+  "DLP": [
+   0.0,
+   1.0
+  ],
+  "BP": [
+   90.0,
+   190.0
+  ],
+  "PR": [
+   50.0,
+   110.0
+  ],
+  "Edema": [
+   0.0,
+   1.0
+  ],
+  "Weak Peripheral Pulse": [
+   0.0,
+   1.0
+  ],
+  "Lung rales": [
+   0.0,
+   1.0
+  ],
+  "Systolic Murmur": [
+   0.0,
+   1.0
+  ],
+  "Diastolic Murmur": [
+   0.0,
+   1.0
+  ],
+  "Typical Chest Pain": [
+   0.0,
+   1.0
+  ],
+  "Dyspnea": [
+   0.0,
+   1.0
+  ],
+  "Function Class": [
+   0.0,
+   3.0
+  ],
+  "Atypical": [
+   0.0,
+   1.0
+  ],
+  "Nonanginal": [
+   0.0,
+   1.0
+  ],
+  "LowTH Ang": [
+   0.0,
+   1.0
+  ],
+  "Q Wave": [
+   0.0,
+   1.0
+  ],
+  "St Elevation": [
+   0.0,
+   1.0
+  ],
+  "St Depression": [
+   0.0,
+   1.0
+  ],
+  "Tinversion": [
+   0.0,
+   1.0
+  ],
+  "LVH": [
+   0.0,
+   1.0
+  ],
+  "Poor R Progression": [
+   0.0,
+   1.0
+  ],
+  "FBS": [
+   62.0,
+   400.0
+  ],
+  "CR": [
+   0.5,
+   2.2
+  ],
+  "TG": [
+   37.0,
+   1050.0
+  ],
+  "LDL": [
+   18.0,
+   232.0
+  ],
+  "HDL": [
+   15.9,
+   111.0
+  ],
+  "BUN": [
+   6.0,
+   52.0
+  ],
+  "ESR": [
+   1.0,
+   90.0
+  ],
+  "HB": [
+   8.9,
+   17.6
+  ],
+  "K": [
+   3.0,
+   6.6
+  ],
+  "Na": [
+   128.0,
+   156.0
+  ],
+  "WBC": [
+   3700.0,
+   18000.0
+  ],
+  "Lymph": [
+   7.0,
+   60.0
+  ],
+  "Neut": [
+   32.0,
+   89.0
+  ],
+  "PLT": [
+   25.0,
+   742.0
+  ],
+  "EF-TTE": [
+   15.0,
+   60.0
+  ],
+  "Region RWMA": [
+   0.0,
+   4.0
+  ],
+  "VHD": [
+   0.0,
+   3.0
+  ],
+  "BBB_LBBB": [
+   0.0,
+   1.0
+  ],
+  "BBB_RBBB": [
+   0.0,
+   1.0
+  ]
+ },
+ "binary": [
+  "Sex",
+  "DM",
+  "HTN",
+  "Current Smoker",
+  "EX-Smoker",
+  "FH",
+  "Obesity",
+  "CRF",
+  "CVA",
+  "Airway disease",
+  "Thyroid Disease",
+  "CHF",
+  "DLP",
+  "Edema",
+  "Weak Peripheral Pulse",
+  "Lung rales",
+  "Systolic Murmur",
+  "Diastolic Murmur",
+  "Typical Chest Pain",
+  "Dyspnea",
+  "Atypical",
+  "Nonanginal",
+  "LowTH Ang",
+  "Q Wave",
+  "St Elevation",
+  "St Depression",
+  "Tinversion",
+  "LVH",
+  "Poor R Progression",
+  "BBB_LBBB",
+  "BBB_RBBB"
+ ]
+}
