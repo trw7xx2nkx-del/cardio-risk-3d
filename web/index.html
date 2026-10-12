@@ -36,6 +36,12 @@ select{margin-bottom:4px}
 .pf input[type=checkbox]{justify-self:start;width:18px;height:18px;accent-color:#1f7a8c}
 details{margin-top:14px}summary{cursor:pointer;font-weight:600}
 #status{font-size:13px;color:#a33;min-height:18px;margin:0}
+.ex{display:grid;grid-template-columns:1fr 64px 46px;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.eb{height:8px;background:#e3e9ec;border-radius:4px;overflow:hidden}
+.eb i{display:block;height:100%}
+.eb i.up{background:#d1363a}.eb i.dn{background:#1f7a8c}
+.ex b{text-align:right}
+#why p{font-size:13px;margin:0 0 8px}
 @media(max-width:820px){main{grid-template-columns:1fr;grid-template-rows:62vh auto}aside{border-left:0;border-top:1px solid #d3dce0}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -55,6 +61,7 @@ details{margin-top:14px}summary{cursor:pointer;font-weight:600}
     <div class="bar"></div>
     <div class="scale"><span>Lower probability</span><span>Higher probability</span></div>
     <div id="detail"></div>
+    <div id="why"></div>
     <h2>Patient data</h2>
     <select id="example" aria-label="Load an example patient"><option value="">Load an example patient...</option></select>
     <p id="status"></p>
@@ -149,6 +156,7 @@ function refresh(){
     detailEl.style.borderLeftColor = '#9fb1b9';
     detailEl.innerHTML = 'Click an artery on the heart to inspect it.';
   }
+  renderWhy();
 }
 function setRisk(r){ Object.assign(risk,r); refresh(); }
 function select(k){ selected = selected===k ? null : k; refresh(); }
@@ -198,7 +206,21 @@ const KEY = ['Age','Sex','Weight','Length','BP','PR','HTN','DM','Current Smoker'
 const LABEL = {Age:'Age (years)',Sex:'Male sex',Weight:'Weight (kg)',Length:'Height (cm)',BP:'Blood pressure (mmHg)',PR:'Pulse rate (bpm)','EF-TTE':'Ejection fraction (%)',FBS:'Fasting glucose','Region RWMA':'Wall-motion regions (0-4)'};
 const pf = document.getElementById('pf'), pf2 = document.getElementById('pf2');
 const cadEl = document.getElementById('cad'), statusEl = document.getElementById('status');
-let META = null, timer = null; const inputs = {};
+let META = null, timer = null, EXPL = null; const inputs = {};
+
+// SHAP explanation for the selected vessel (or overall CAD when none is selected)
+function renderWhy(){
+  const el = document.getElementById('why'), t = selected || 'CAD';
+  if (!EXPL || !EXPL[t]){ el.innerHTML = ''; return; }
+  const rows = EXPL[t].top, m = Math.max(...rows.map(r=>Math.abs(r.contribution)), 1e-6);
+  const val = r => META && META.binary.includes(r.feature) ? (r.value ? 'yes' : 'no') : (Number.isInteger(r.value) ? r.value : r.value.toFixed(1));
+  el.innerHTML = `<h2>Why: ${t === 'CAD' ? 'overall CAD' : t}</h2>
+    <p>Model baseline: ${Math.round(EXPL[t].base*100)}% (the starting point before any patient data). Bars show how each input moved this prediction away from it, in percentage points (top ${rows.length} inputs).</p>` +
+    rows.map(r=>{
+      const up = r.contribution > 0, w = Math.round(Math.abs(r.contribution)/m*100);
+      return `<div class="ex"><span>${LABEL[r.feature] || r.feature}: ${val(r)}</span><div class="eb"><i class="${up?'up':'dn'}" style="width:${w}%"></i></div><b>${up?'+':'-'}${Math.abs(r.contribution*100).toFixed(1)}</b></div>`;
+    }).join('');
+}
 
 function addField(host, c){
   const lab = document.createElement('label'); lab.textContent = LABEL[c] || c; lab.htmlFor = 'f_'+c;
@@ -221,6 +243,7 @@ async function predict(){
     const r = await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({features:f})});
     if (!r.ok) throw new Error('HTTP '+r.status);
     const p = await r.json();
+    EXPL = p.explanations || null;
     statusEl.textContent = '';
     setRisk({LAD:p.LAD, LCX:p.LCX, RCA:p.RCA});
     const c = '#'+riskColor(p.CAD).getHexString();
