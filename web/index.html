@@ -75,11 +75,11 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 const DEFS = {
   LAD:{name:'Left anterior descending (LAD)',note:'Supplies blood to the front of the heart.',
-       pts:[[.12,.35],[.3,-.1],[.38,-.55],[.28,-.95],[.08,-1.25]]},
+       pts:[[0,.7],[0,.2],[0,-.5],[.05,-1.2],[.12,-1.75]]},
   LCX:{name:'Left circumflex (LCX)',note:'Supplies blood to the side and back of the heart.',
-       pts:[[.2,.3],[.55,.45],[.9,.35],[1.1,.1],[1,-.2]]},
+       pts:[[0,.8],[.4,.85],[.75,.65],[.95,.25],[.98,-.3]]},
   RCA:{name:'Right coronary artery (RCA)',note:'Supplies blood to the right side and bottom of the heart.',
-       pts:[[-.1,.35],[-.5,.5],[-.9,.3],[-1,-.1],[-.85,-.5],[-.5,-.8],[-.2,-1]]}
+       pts:[[-.3,.8],[-.75,.75],[-1,.35],[-1.05,-.2],[-.9,-.8],[-.5,-1.3]]}
 };
 const KEYS = Object.keys(DEFS);
 const risk = {LAD:.2, LCX:.2, RCA:.2};
@@ -91,7 +91,7 @@ const level = p => p<.33 ? 'Lower' : p<.66 ? 'Intermediate' : 'Higher';
 const stage = document.getElementById('stage');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40,1,.1,100);
-const HOME = new THREE.Vector3(1.6,.7,6.6);
+const HOME = new THREE.Vector3(1.2,.4,8);
 camera.position.copy(HOME);
 const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -101,33 +101,83 @@ const sun = new THREE.DirectionalLight(0xffffff,1.5); sun.position.set(3,4,6); s
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 3.5; controls.maxDistance = 12;
 
-// Heart body: parametric heart outline, extruded and rounded
-const outline = [];
-for (let i=0;i<=120;i++){
-  const t = i/120*Math.PI*2;
-  outline.push(new THREE.Vector2(.1*16*Math.pow(Math.sin(t),3),
-    .1*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))));
-}
+// Heart: built from tapered, slightly uneven ellipsoids, viewed from the front
 const heart = new THREE.Group();
-heart.position.set(0,.25,-.3);   // puts the heart's centre at the orbit pivot
+heart.position.set(0,.25,-.3);
 scene.add(heart);
-heart.add(new THREE.Mesh(
-  new THREE.ExtrudeGeometry(new THREE.Shape(outline),{depth:.6,bevelEnabled:true,bevelThickness:.5,bevelSize:.35,bevelSegments:16,curveSegments:96}),
-  new THREE.MeshStandardMaterial({color:0x8d5460,roughness:.6,metalness:.05})));
+const bodyMeshes = [];
+function blob(rx,ry,rz,pos,color,taper=true){
+  const g = new THREE.SphereGeometry(1,96,64), p = g.attributes.position;
+  for (let i=0;i<p.count;i++){
+    const x=p.getX(i), y=p.getY(i), z=p.getZ(i);
+    const f = taper && y<0 ? 1-.6*Math.pow(-y,1.5) : 1;            // narrows toward the apex
+    const n = 1+.035*Math.sin(5*x+2*y)*Math.sin(4*z+3*x+1);         // gentle surface unevenness
+    p.setXYZ(i, x*rx*f*n, y*ry, z*rz*f*n);
+  }
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g,new THREE.MeshStandardMaterial({color,roughness:.55,metalness:.04}));
+  m.position.set(...pos); heart.add(m); bodyMeshes.push(m);
+}
+blob(1.1,1.5,.9,[.15,-.5,0],0x8e3f47);            // left ventricle
+blob(.75,1.3,.65,[-.55,-.25,.35],0xa4585f);       // right ventricle
+blob(.6,.7,.55,[-1,.85,.1],0x7a3a48,false);       // right atrium
+blob(.4,.45,.25,[-.55,.95,.7],0x7a3a48,false);    // right atrial appendage
+blob(.35,.5,.25,[.85,.8,.55],0x7a3a48,false);     // left atrial appendage
+blob(.8,.5,.6,[.4,.9,-.4],0x7a3a48,false);        // left atrium (mostly behind)
+const vessel = (pts,r,col)=>{
+  const curve = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));
+  const mat = new THREE.MeshStandardMaterial({color:col,roughness:.55});
+  heart.add(new THREE.Mesh(new THREE.TubeGeometry(curve,32,r,16,false), mat));
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(r,16,12), mat);
+  cap.position.copy(curve.getPoint(1)); heart.add(cap);
+};
+vessel([[0,.7,.1],[0,1.5,.15],[.25,2.05,.05],[.8,2.15,-.3],[1.2,1.6,-.6]],.24,0xa8505c);   // aorta
+vessel([[-.15,.8,.55],[.15,1.35,.6],[.6,1.7,.35],[1.2,1.6,-.1]],.18,0x6f86a3);            // pulmonary trunk
+vessel([[-1,1.2,0],[-1,2.3,0]],.2,0x5f7396);                                              // superior vena cava
+scene.updateMatrixWorld(true);
+
+// Lay a path (front-view x,y points) onto the heart surface by casting rays at it
+const dropper = new THREE.Raycaster();
+function drape(pts2d, lift=.05){
+  const guide = new THREE.CatmullRomCurve3(pts2d.map(p=>new THREE.Vector3(p[0],p[1],0))), out = [];
+  for (let i=0;i<=40;i++){
+    const g = guide.getPoint(i/40);
+    dropper.set(new THREE.Vector3(g.x, g.y+heart.position.y, 9), new THREE.Vector3(0,0,-1));
+    const h = dropper.intersectObjects(bodyMeshes,false)[0];
+    if (h) out.push(heart.worldToLocal(h.point.clone()).addScaledVector(h.face.normal,lift));
+  }
+  return new THREE.CatmullRomCurve3(out);
+}
 
 // Arteries: tubes lying on the front face of the heart (front face is at z = 1.1)
 const arteries = {}, tags = {};
 KEYS.forEach(k=>{
-  const curve = new THREE.CatmullRomCurve3(DEFS[k].pts.map(p=>new THREE.Vector3(p[0],p[1],1.14)));
+  const curve = drape(DEFS[k].pts);
   const mat = new THREE.MeshStandardMaterial({color:0x2e9e6b,roughness:.4});
   const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve,64,.075,12,false), mat);
   mesh.userData.key = k;
   heart.add(mesh);
   arteries[k] = {mesh,mat,curve};
+  const endCap = new THREE.Mesh(new THREE.SphereGeometry(.075,12,10), mat);
+  endCap.position.copy(curve.getPoint(1)); heart.add(endCap);
   const tag = document.createElement('div');
   tag.className = 'tag'; tag.textContent = k;
   stage.appendChild(tag); tags[k] = tag;
 });
+
+// Side branches share the parent artery's material, so they recolor and select with it
+const branchMeshes = [];
+function branch(k,t,dx,dy,len){
+  const p = arteries[k].curve.getPoint(t), d = new THREE.Vector3(dx,dy,0).normalize();
+  const side = new THREE.Vector3(-d.y,d.x,0).multiplyScalar(.06);
+  const c = drape([[p.x,p.y],[p.x+d.x*len*.5+side.x,p.y+d.y*len*.5+side.y],[p.x+d.x*len,p.y+d.y*len]], .04);
+  const m = new THREE.Mesh(new THREE.TubeGeometry(c,24,.045,8,false), arteries[k].mat);
+  m.userData.key = k; heart.add(m); branchMeshes.push(m);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(.045,10,8), arteries[k].mat);
+  tip.position.copy(c.getPoint(1)); tip.userData.key = k; heart.add(tip); branchMeshes.push(tip);
+}
+[['LAD',.3,1,-.3,.4],['LAD',.55,1,-.25,.35],['LCX',.35,0,-1,.55],['LCX',.7,-.2,-1,.4],['RCA',.55,1,.2,.4],['RCA',.8,.9,.4,.35]].forEach(a=>branch(...a));
+heart.rotation.z = .5;   // long axis tilts so the apex points toward the patient's left
 
 // Side panel
 const slidersEl = document.getElementById('sliders'), detailEl = document.getElementById('detail');
@@ -144,7 +194,9 @@ function refresh(){
     arteries[k].mat.color.copy(c);
     arteries[k].mat.emissive.copy(c);
     arteries[k].mat.emissiveIntensity = selected===k ? .9 : .12;
-    document.getElementById('v'+k).textContent = Math.round(risk[k]*100)+'%';
+    const d = DELTA[k];
+    document.getElementById('v'+k).innerHTML = Math.round(risk[k]*100)+'%' +
+      (d && Math.abs(d) >= .01 ? ` <small style="color:${d>0?'#c0392b':'#1f7a8c'}">${d>0?'+':''}${Math.round(d*100)}</small>` : '');
     document.getElementById('s'+k).value = Math.round(risk[k]*100);
     tags[k].classList.toggle('sel', selected===k);
   });
@@ -164,7 +216,7 @@ window.cardioViewer = {setRisk, select};   // Phase 3 calls setRisk() with real 
 
 // Clicking and hovering
 const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
-const meshes = KEYS.map(k=>arteries[k].mesh);
+const meshes = [...KEYS.map(k=>arteries[k].mesh), ...branchMeshes];
 function pick(e){
   const r = renderer.domElement.getBoundingClientRect();
   mouse.set((e.clientX-r.left)/r.width*2-1, -((e.clientY-r.top)/r.height)*2+1);
@@ -206,7 +258,7 @@ const KEY = ['Age','Sex','Weight','Length','BP','PR','HTN','DM','Current Smoker'
 const LABEL = {Age:'Age (years)',Sex:'Male sex',Weight:'Weight (kg)',Length:'Height (cm)',BP:'Blood pressure (mmHg)',PR:'Pulse rate (bpm)','EF-TTE':'Ejection fraction (%)',FBS:'Fasting glucose','Region RWMA':'Wall-motion regions (0-4)'};
 const pf = document.getElementById('pf'), pf2 = document.getElementById('pf2');
 const cadEl = document.getElementById('cad'), statusEl = document.getElementById('status');
-let META = null, timer = null, EXPL = null; const inputs = {};
+let META = null, timer = null, EXPL = null, PREV = null, DELTA = {}; const inputs = {};
 
 // SHAP explanation for the selected vessel (or overall CAD when none is selected)
 function renderWhy(){
@@ -219,7 +271,13 @@ function renderWhy(){
     rows.map(r=>{
       const up = r.contribution > 0, w = Math.round(Math.abs(r.contribution)/m*100);
       return `<div class="ex"><span>${LABEL[r.feature] || r.feature}: ${val(r)}</span><div class="eb"><i class="${up?'up':'dn'}" style="width:${w}%"></i></div><b>${up?'+':'-'}${Math.abs(r.contribution*100).toFixed(1)}</b></div>`;
-    }).join('');
+    }).join('') + catRows(EXPL[t].categories);
+}
+function catRows(cats){
+  if (!cats) return '';
+  const e = Object.entries(cats).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])), m = Math.max(...e.map(x=>Math.abs(x[1])), 1e-6);
+  return '<h2>By category (all inputs)</h2>' + e.map(([n,v])=>
+    `<div class="ex"><span>${n}</span><div class="eb"><i class="${v>0?'up':'dn'}" style="width:${Math.round(Math.abs(v)/m*100)}%"></i></div><b>${v>0?'+':'-'}${Math.abs(v*100).toFixed(1)}</b></div>`).join('');
 }
 
 function addField(host, c){
@@ -244,6 +302,8 @@ async function predict(){
     if (!r.ok) throw new Error('HTTP '+r.status);
     const p = await r.json();
     EXPL = p.explanations || null;
+    DELTA = PREV ? {LAD:p.LAD-PREV.LAD, LCX:p.LCX-PREV.LCX, RCA:p.RCA-PREV.RCA} : {};
+    PREV = {LAD:p.LAD, LCX:p.LCX, RCA:p.RCA};
     statusEl.textContent = '';
     setRisk({LAD:p.LAD, LCX:p.LCX, RCA:p.RCA});
     const c = '#'+riskColor(p.CAD).getHexString();

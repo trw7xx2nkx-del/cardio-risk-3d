@@ -1,5 +1,5 @@
-target,model,accuracy,precision,recall,f1,roc_auc,brier
-CAD,RandomForest,0.851,0.887,0.907,0.897,0.924,0.113
-LAD,RandomForest,0.802,0.81,0.864,0.836,0.856,0.163
-LCX,RandomForest,0.686,0.605,0.58,0.592,0.718,0.212
-RCA,ExtraTrees,0.67,0.6,0.368,0.457,0.725,0.201
+target,model,accuracy,precision,recall,f1,roc_auc,auc_ci_low,auc_ci_high,brier
+CAD,ExtraTrees,0.865,0.911,0.898,0.904,0.911,0.872,0.948,0.108
+LAD,RandomForest,0.779,0.786,0.853,0.818,0.855,0.809,0.896,0.162
+LCX,RandomForest,0.66,0.614,0.361,0.455,0.723,0.666,0.773,0.207
+RCA,ExtraTrees,0.657,0.558,0.421,0.48,0.728,0.673,0.783,0.201

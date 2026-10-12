@@ -18,6 +18,23 @@ MODELS = {t: joblib.load(M / f"{t}.joblib") for t in TARGETS}
 EXPLAINERS = {t: shap.TreeExplainer(m) for t, m in MODELS.items()}
 TOP_N = 8
 
+CATEGORY = {}
+for cat, cols in {
+    "Demographics": ["Age", "Sex", "Weight", "Length", "BMI"],
+    "Risk factors and history": ["DM", "HTN", "Current Smoker", "EX-Smoker", "FH", "Obesity",
+                                 "CRF", "CVA", "Airway disease", "Thyroid Disease", "CHF", "DLP"],
+    "Exam findings": ["BP", "PR", "Edema", "Weak Peripheral Pulse", "Lung rales",
+                      "Systolic Murmur", "Diastolic Murmur"],
+    "Symptoms": ["Typical Chest Pain", "Dyspnea", "Function Class", "Atypical", "Nonanginal", "LowTH Ang"],
+    "ECG": ["Q Wave", "St Elevation", "St Depression", "Tinversion", "LVH",
+            "Poor R Progression", "BBB_LBBB", "BBB_RBBB"],
+    "Echocardiography": ["EF-TTE", "Region RWMA", "VHD"],
+    "Blood tests": ["FBS", "CR", "TG", "LDL", "HDL", "BUN", "ESR", "HB", "K", "Na",
+                    "WBC", "Lymph", "Neut", "PLT"],
+}.items():
+    for c in cols:
+        CATEGORY[c] = cat
+
 app = FastAPI(title="Cardiac risk API (decision support / education only)")
 
 class Patient(BaseModel):
@@ -29,8 +46,12 @@ def explain(t, X):
     vals = vals[0, :, 1] if vals.ndim == 3 else vals[0]
     base = np.asarray(sv.base_values)
     base = float(base[0, 1]) if base.ndim == 2 else float(np.ravel(base)[0])
+    cats = {}
+    for c, v in zip(COLUMNS, vals):
+        name = CATEGORY.get(c, "Other")
+        cats[name] = cats.get(name, 0.0) + float(v)
     order = np.argsort(-np.abs(vals))[:TOP_N]
-    return {"base": base,
+    return {"base": base, "categories": cats,
             "top": [{"feature": COLUMNS[i], "value": float(X.iloc[0, i]),
                      "contribution": float(vals[i])} for i in order]}
 
