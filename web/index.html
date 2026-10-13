@@ -44,6 +44,10 @@ details{margin-top:14px}summary{cursor:pointer;font-weight:600}
 #why p{font-size:13px;margin:0 0 8px}
 .pill{font-weight:600;font-size:11px;padding:1px 8px;border-radius:99px;background:#dcebef;color:#1f4d59;margin-left:6px;cursor:help;vertical-align:middle}
 .pill.weak{background:#f6e7d0;color:#7a4a00}
+.plain{background:#fff;border-left:4px solid #1f7a8c;padding:10px 12px;border-radius:0 8px 8px 0;margin:8px 0 12px}
+#why .plain p{font-size:14px;margin:0 0 6px}
+#why .plain p:last-child{margin:0}
+#why .plain .wi{font-size:12.5px;color:#4b5d66}
 @media(max-width:820px){main{grid-template-columns:1fr;grid-template-rows:62vh auto}aside{border-left:0;border-top:1px solid #d3dce0}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -269,7 +273,7 @@ function renderWhy(){
   if (!EXPL || !EXPL[t]){ el.innerHTML = ''; return; }
   const rows = EXPL[t].top, m = Math.max(...rows.map(r=>Math.abs(r.contribution)), 1e-6);
   const val = r => META && META.binary.includes(r.feature) ? (r.value ? 'yes' : 'no') : (Number.isInteger(r.value) ? r.value : r.value.toFixed(1));
-  el.innerHTML = `<h2>Why: ${t === 'CAD' ? 'overall CAD' : t}</h2>
+  el.innerHTML = `<h2>Why: ${t === 'CAD' ? 'overall CAD' : t}</h2>${EXPL[t].text ? `<div class="plain"><p>${EXPL[t].text.summary}</p>${EXPL[t].text.whatif ? `<p class="wi"><b>What-if:</b> ${EXPL[t].text.whatif}</p>` : ''}</div>` : ''}
     <p>Model baseline: ${Math.round(EXPL[t].base*100)}% (the starting point before any patient data). Bars show how each input moved this prediction away from it, in percentage points (top ${rows.length} inputs).</p>` +
     rows.map(r=>{
       const up = r.contribution > 0, w = Math.round(Math.abs(r.contribution)/m*100);
