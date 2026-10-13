@@ -56,7 +56,7 @@ details{margin-top:14px}summary{cursor:pointer;font-weight:600}
 <div class="warn">Decision support and education only. Not a substitute for formal diagnostic imaging or a clinician's judgment.</div>
 <main>
   <div id="stage">
-    <div class="hint">Stylized heart, front view. The patient's right is on the left of the screen. Drag to rotate, scroll to zoom, click an artery.</div>
+    <div class="hint">Stylized heart, front view. The patient's right is on the left of the screen. Drag to rotate, scroll to zoom, click an artery or any part of the heart.</div>
     <button id="reset" type="button">Reset view</button>
   </div>
   <aside>
@@ -89,7 +89,7 @@ const DEFS = {
 };
 const KEYS = Object.keys(DEFS);
 const risk = {LAD:.2, LCX:.2, RCA:.2};
-let selected = null;
+let selected = null, part = null;
 
 const riskColor = p => new THREE.Color().setHSL((1-p)*0.36, .72, .46);   // green (0%) to red (100%)
 const level = p => p<.33 ? 'Lower' : p<.66 ? 'Intermediate' : 'Higher';
@@ -111,8 +111,19 @@ controls.enableDamping = true; controls.enablePan = false; controls.minDistance 
 const heart = new THREE.Group();
 heart.position.set(0,.25,-.3);
 scene.add(heart);
-const bodyMeshes = [];
-function blob(rx,ry,rz,pos,color,taper=true){
+const bodyMeshes = [], anatMeshes = [];
+const ANAT = {
+  lv:{name:'Left ventricle', role:'The main pumping chamber. It sends oxygen-rich blood to the whole body through the aorta, which is why its wall is the thickest. The LAD and LCX supply most of it.'},
+  rv:{name:'Right ventricle', role:'Pumps oxygen-poor blood to the lungs through the pulmonary trunk. It is supplied mainly by the RCA.'},
+  ra:{name:'Right atrium', role:'Receives oxygen-poor blood from the body through the vena cava. In most people the RCA supplies the heartbeat-setting sinoatrial node located here.'},
+  raa:{name:'Right atrial appendage', role:'A small pouch on the right atrium.'},
+  laa:{name:'Left atrial appendage', role:'A small pouch on the left atrium. Blood clots tend to form here in atrial fibrillation.'},
+  la:{name:'Left atrium', role:'Receives oxygen-rich blood back from the lungs and passes it to the left ventricle. Mostly hidden behind the other chambers in this view.'},
+  aorta:{name:'Aorta', role:"The body's main artery. It carries oxygen-rich blood out of the left ventricle, and the coronary arteries branch off its base."},
+  pa:{name:'Pulmonary trunk', role:'Carries oxygen-poor blood from the right ventricle to the lungs.'},
+  svc:{name:'Superior vena cava', role:'The large vein returning oxygen-poor blood from the head and arms to the right atrium.'}
+};
+function blob(rx,ry,rz,pos,color,taper=true,info=null){
   const g = new THREE.SphereGeometry(1,96,64), p = g.attributes.position;
   for (let i=0;i<p.count;i++){
     const x=p.getX(i), y=p.getY(i), z=p.getZ(i);
@@ -123,23 +134,25 @@ function blob(rx,ry,rz,pos,color,taper=true){
   g.computeVertexNormals();
   const m = new THREE.Mesh(g,new THREE.MeshStandardMaterial({color,roughness:.55,metalness:.04}));
   m.position.set(...pos); heart.add(m); bodyMeshes.push(m);
+  if (info){ m.userData.anat = info; anatMeshes.push(m); }
 }
-blob(1.1,1.5,.9,[.15,-.5,0],0x8e3f47);            // left ventricle
-blob(.75,1.3,.65,[-.55,-.25,.35],0xa4585f);       // right ventricle
-blob(.6,.7,.55,[-1,.85,.1],0x7a3a48,false);       // right atrium
-blob(.4,.45,.25,[-.55,.95,.7],0x7a3a48,false);    // right atrial appendage
-blob(.35,.5,.25,[.85,.8,.55],0x7a3a48,false);     // left atrial appendage
-blob(.8,.5,.6,[.4,.9,-.4],0x7a3a48,false);        // left atrium (mostly behind)
-const vessel = (pts,r,col)=>{
+blob(1.1,1.5,.9,[.15,-.5,0],0x8e3f47,true,ANAT.lv);            // left ventricle
+blob(.75,1.3,.65,[-.55,-.25,.35],0xa4585f,true,ANAT.rv);       // right ventricle
+blob(.6,.7,.55,[-1,.85,.1],0x7a3a48,false,ANAT.ra);       // right atrium
+blob(.4,.45,.25,[-.55,.95,.7],0x7a3a48,false,ANAT.raa);    // right atrial appendage
+blob(.35,.5,.25,[.85,.8,.55],0x7a3a48,false,ANAT.laa);     // left atrial appendage
+blob(.8,.5,.6,[.4,.9,-.4],0x7a3a48,false,ANAT.la);        // left atrium (mostly behind)
+const vessel = (pts,r,col,info)=>{
   const curve = new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));
   const mat = new THREE.MeshStandardMaterial({color:col,roughness:.55});
-  heart.add(new THREE.Mesh(new THREE.TubeGeometry(curve,32,r,16,false), mat));
+  const tube = new THREE.Mesh(new THREE.TubeGeometry(curve,32,r,16,false), mat);
   const cap = new THREE.Mesh(new THREE.SphereGeometry(r,16,12), mat);
-  cap.position.copy(curve.getPoint(1)); heart.add(cap);
+  cap.position.copy(curve.getPoint(1));
+  [tube,cap].forEach(m=>{ m.userData.anat = info; heart.add(m); anatMeshes.push(m); });
 };
-vessel([[0,.7,.1],[0,1.5,.15],[.25,2.05,.05],[.8,2.15,-.3],[1.2,1.6,-.6]],.24,0xa8505c);   // aorta
-vessel([[-.15,.8,.55],[.15,1.35,.6],[.6,1.7,.35],[1.2,1.6,-.1]],.18,0x6f86a3);            // pulmonary trunk
-vessel([[-1,1.2,0],[-1,2.3,0]],.2,0x5f7396);                                              // superior vena cava
+vessel([[0,.7,.1],[0,1.5,.15],[.25,2.05,.05],[.8,2.15,-.3],[1.2,1.6,-.6]],.24,0xa8505c,ANAT.aorta);   // aorta
+vessel([[-.15,.8,.55],[.15,1.35,.6],[.6,1.7,.35],[1.2,1.6,-.1]],.18,0x6f86a3,ANAT.pa);            // pulmonary trunk
+vessel([[-1,1.2,0],[-1,2.3,0]],.2,0x5f7396,ANAT.svc);                                              // superior vena cava
 scene.updateMatrixWorld(true);
 
 // Lay a path (front-view x,y points) onto the heart surface by casting rays at it
@@ -212,23 +225,26 @@ function refresh(){
     detailEl.innerHTML = `<b>${DEFS[selected].name}</b><div class="big" style="color:${c}">${Math.round(p*100)}%</div>${level(p)} predicted probability of stenosis.<br>${DEFS[selected].note}`;
   } else {
     detailEl.style.borderLeftColor = '#9fb1b9';
-    detailEl.innerHTML = 'Click an artery on the heart to inspect it.';
+    detailEl.innerHTML = part ? '<b>' + part.name + '</b>' + part.role : 'Click an artery, chamber, or large vessel to learn what it is.';
   }
   renderWhy();
 }
 function setRisk(r){ Object.assign(risk,r); refresh(); }
-function select(k){ selected = selected===k ? null : k; refresh(); }
+function select(k){
+  if (k && typeof k === 'object'){ part = k; selected = null; refresh(); return; }   // a chamber or large vessel
+  part = null; selected = selected===k ? null : k; refresh();
+}
 window.cardioViewer = {setRisk, select};   // Phase 3 calls setRisk() with real model output
 
 // Clicking and hovering
 const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
-const meshes = [...KEYS.map(k=>arteries[k].mesh), ...branchMeshes];
+const meshes = [...KEYS.map(k=>arteries[k].mesh), ...branchMeshes, ...anatMeshes];
 function pick(e){
   const r = renderer.domElement.getBoundingClientRect();
   mouse.set((e.clientX-r.left)/r.width*2-1, -((e.clientY-r.top)/r.height)*2+1);
   ray.setFromCamera(mouse,camera);
   const hit = ray.intersectObjects(meshes)[0];
-  return hit ? hit.object.userData.key : null;
+  return hit ? (hit.object.userData.key || hit.object.userData.anat || null) : null;
 }
 let down = null;
 renderer.domElement.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});
