@@ -1,0 +1,5 @@
+target,typical chest pain alone,age alone (logistic),7 simple risk factors (logistic),our model (nested CV)
+CAD,0.799,0.719,0.905,0.911
+LAD,0.732,0.675,0.791,0.855
+LCX,0.649,0.679,0.749,0.723
+RCA,0.65,0.629,0.737,0.728
