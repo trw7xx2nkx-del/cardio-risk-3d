@@ -5,3 +5,5 @@ shap==0.53.0
 joblib
 fastapi
 uvicorn[standard]
+matplotlib
+openpyxl
