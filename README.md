@@ -13,7 +13,7 @@ A web app that predicts overall coronary artery disease (CAD) and significant st
 ## What it does
 
 - **Prediction:** four classifiers (overall CAD, LAD, LCX, RCA) trained on the Extension of the Z-Alizadeh Sani dataset (303 patients), validated with nested cross-validation, and calibrated so percentages match observed rates.
-- **3D heart (Three.js):** an anatomical heart with ventricles, atria, aorta, pulmonary trunk and vena cava. The LAD, LCX and RCA (with side branches) change color from green to red with the predicted probability. Rotate, zoom, and click any artery, chamber or vessel.
+- **3D heart (Three.js):** a stylized anatomical heart with ventricles, atria, aorta, pulmonary trunk and vena cava. The LAD, LCX and RCA (with side branches) change color from green to red with the predicted probability. Rotate, zoom, and click any artery, chamber or vessel.
 - **Explanations:** per-input SHAP bars, totals by category (symptoms, ECG, echo, blood tests and so on), a plain-language summary, and a what-if line, all computed on the server from fixed templates (no generated text).
 - **Reliability badges and muted colors:** each vessel carries a badge from its cross-validated ROC-AUC ("strong", "moderate" or "modest signal"), and vessels with only a modest signal are drawn in muted colors, so weaker predictions are not presented with false confidence.
 - **Honesty about inputs:** the result shows how many inputs differ from the typical (median) patient, because unchanged inputs are filled with dataset medians.
