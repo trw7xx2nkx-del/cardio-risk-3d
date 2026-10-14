@@ -48,6 +48,9 @@ details{margin-top:14px}summary{cursor:pointer;font-weight:600}
 #why .plain p{font-size:14px;margin:0 0 6px}
 #why .plain p:last-child{margin:0}
 #why .plain .wi{font-size:12.5px;color:#4b5d66}
+.xs{display:flex;gap:14px;align-items:center;margin-top:12px}
+.xs small{display:block;font-size:12px;color:#4b5d66;line-height:1.35;margin:2px 0}
+.xs-note{font-size:11.5px;color:#6a7b84;margin-top:8px}
 @media(max-width:820px){main{grid-template-columns:1fr;grid-template-rows:62vh auto}aside{border-left:0;border-top:1px solid #d3dce0}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -222,12 +225,26 @@ function refresh(){
   if (selected){
     const p = risk[selected], c = '#'+riskColor(p).getHexString();
     detailEl.style.borderLeftColor = c;
-    detailEl.innerHTML = `<b>${DEFS[selected].name}</b><div class="big" style="color:${c}">${Math.round(p*100)}%</div>${level(p)} predicted probability of stenosis.<br>${DEFS[selected].note}`;
+    detailEl.innerHTML = `<b>${DEFS[selected].name}</b><div class="big" style="color:${c}">${Math.round(p*100)}%</div>${level(p)} predicted probability of stenosis.<br>${DEFS[selected].note}${crossSection(p)}`;
   } else {
     detailEl.style.borderLeftColor = '#9fb1b9';
     detailEl.innerHTML = part ? '<b>' + part.name + '</b>' + part.role : 'Click an artery, chamber, or large vessel to learn what it is.';
   }
   renderWhy();
+}
+// Illustrative artery cross-section: plaque opacity shows the predicted probability of >=50% narrowing
+function crossSection(p){
+  const op = (.12 + .88*p).toFixed(2);
+  return `<div class="xs"><svg viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Illustrative artery cross-section">
+      <circle cx="60" cy="60" r="52" fill="#d9a3a8" stroke="#b05a63" stroke-width="3"/>
+      <circle cx="60" cy="60" r="38" fill="#b3262e"/>
+      <path fill-rule="evenodd" fill="#e6c36a" fill-opacity="${op}" d="M22 60a38 38 0 1 0 76 0a38 38 0 1 0 -76 0Z M41 50a19 19 0 1 0 38 0a19 19 0 1 0 -38 0Z"/>
+      <circle cx="60" cy="50" r="19" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 3" opacity=".85"/>
+    </svg>
+    <div><small><b>Red:</b> open channel for blood</small>
+    <small><b>Yellow:</b> plaque. The stronger the color, the higher the predicted chance of significant narrowing.</small>
+    <small><b>Dashed ring:</b> how small the channel would be at 50% narrowing</small></div></div>
+    <div class="xs-note">Illustrative only. It does not show a measured lesion: the dataset contains no information about the size or position of narrowing, and "significant" means 50% or more.</div>`;
 }
 function setRisk(r){ Object.assign(risk,r); refresh(); }
 function select(k){
