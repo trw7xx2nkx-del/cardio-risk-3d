@@ -301,7 +301,8 @@ const pf = document.getElementById('pf'), pf2 = document.getElementById('pf2');
 const cadEl = document.getElementById('cad'), statusEl = document.getElementById('status');
 let META = null, timer = null, EXPL = null, PREV = null, DELTA = {};
 const tier = a => a >= .85 ? 'strong' : a >= .75 ? 'moderate' : 'modest';
-const satFor = k => (META && META.reliability && META.reliability[k] && META.reliability[k].auc < .75) ? .38 : .72;   // muted color = modest signal const inputs = {};
+const satFor = k => (META && META.reliability && META.reliability[k] && META.reliability[k].auc < .75) ? .38 : .72;   // muted color = modest signal
+const inputs = {};
 
 // SHAP explanation for the selected vessel (or overall CAD when none is selected)
 function renderWhy(){
