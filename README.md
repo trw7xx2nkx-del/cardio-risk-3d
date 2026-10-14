@@ -18,7 +18,7 @@ A web app that predicts overall coronary artery disease (CAD) and significant st
 - **Reliability badges and muted colors:** each vessel carries a badge from its cross-validated ROC-AUC ("strong", "moderate" or "modest signal"), and vessels with only a modest signal are drawn in muted colors, so weaker predictions are not presented with false confidence.
 - **Honesty about inputs:** the result shows how many inputs differ from the typical (median) patient, because unchanged inputs are filled with dataset medians.
 - **Illustrative cross-section:** selecting an artery shows a cutaway where plaque opacity reflects the predicted probability. It is explicitly labeled illustrative, since the dataset has no lesion measurements.
-- **Patient form:** enter values or load an example. Impossible values are blocked, and values outside the training range raise a warning.
+- **Patient form:** enter values or load an example. Blank or non-numeric entries and zero weight or height are rejected. Values outside the training range are marked in red with a warning that the prediction is unreliable, but the prediction still runs.
 
 ## Quick start
 
@@ -58,7 +58,7 @@ Run the tests: `pip install -r requirements-dev.txt && python -m pytest -q` (9 t
 
 **Calibration.** Tree ensembles produced compressed probabilities (observed rates were more extreme than predicted). Platt scaling fitted on cross-validated predictions corrects this; its benefit was measured with a second round of cross-validation. See `docs/figures/calibration_before_after.png`.
 
-**Explanations.** `shap.TreeExplainer` gives per-patient contributions, rescaled so the bars add up to the displayed (calibrated) prediction minus the calibrated baseline. Sentences are template-based, and the what-if re-runs the model with one changed input. It describes the model's behavior and is not medical advice or a causal claim.
+**Explanations.** `shap.TreeExplainer` gives per-patient contributions, rescaled so the bars add up to the displayed (calibrated) prediction minus the calibrated baseline. Sentences are template-based. The what-if line takes the eight most influential inputs, leaves out the ones a person cannot change (age, sex, family history, height, weight, BMI), and for each one flips a yes/no input or sets a numeric input to the dataset median. It re-runs the model for each of these single changes and reports the one that moves the estimate most. It describes the model's behavior and is not medical advice or a causal claim.
 
 **Serving.** FastAPI (`api.py`): `GET /api/meta` and `POST /api/predict`. Inputs the user does not change are filled with the dataset median.
 
