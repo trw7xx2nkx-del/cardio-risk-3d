@@ -65,15 +65,17 @@ details{margin-top:14px}summary{cursor:pointer;font-weight:600}
   <aside>
     <h1>Coronary artery risk</h1>
     <div id="cad">Overall CAD probability<br><b>-</b></div>
-    <p>Predicted probability of significant narrowing (50% or more) in each vessel. Sliders update from the model and can be dragged to test colors.</p>
+    <p>Estimated probability of significant narrowing (50% or more) in each vessel, among patients like those in the training data (disease status confirmed by cardiac catheterization). It is not a forecast of future risk. Sliders update from the model and can be dragged to test colors.</p>
     <div id="sliders"></div>
     <div class="bar"></div>
     <div class="scale"><span>Lower probability</span><span>Higher probability</span></div>
+    <div class="xs-note">Muted colors mark a vessel with only a modest signal: the model is less reliable for it.</div>
     <div id="detail"></div>
     <div id="why"></div>
     <h2>Patient data</h2>
     <select id="example" aria-label="Load an example patient"><option value="">Load an example patient...</option></select>
     <p id="status"></p>
+    <p class="xs-note">Demo only. Entered values are used to compute the prediction and are not stored by this app (the host keeps standard server logs). Please do not enter real patient information.</p>
     <div class="pf" id="pf"></div>
     <details><summary>More clinical features</summary><div class="pf" id="pf2"></div></details>
   </aside>
@@ -94,7 +96,7 @@ const KEYS = Object.keys(DEFS);
 const risk = {LAD:.2, LCX:.2, RCA:.2};
 let selected = null, part = null;
 
-const riskColor = p => new THREE.Color().setHSL((1-p)*0.36, .72, .46);   // green (0%) to red (100%)
+const riskColor = (p, s=.72) => new THREE.Color().setHSL((1-p)*0.36, s, .46);   // green (0%) to red (100%)
 const level = p => p<.33 ? 'Lower' : p<.66 ? 'Intermediate' : 'Higher';
 
 const stage = document.getElementById('stage');
@@ -212,7 +214,7 @@ KEYS.forEach(k=>{
 
 function refresh(){
   KEYS.forEach(k=>{
-    const c = riskColor(risk[k]);
+    const c = riskColor(risk[k], satFor(k));
     arteries[k].mat.color.copy(c);
     arteries[k].mat.emissive.copy(c);
     arteries[k].mat.emissiveIntensity = selected===k ? .9 : .12;
@@ -223,7 +225,7 @@ function refresh(){
     tags[k].classList.toggle('sel', selected===k);
   });
   if (selected){
-    const p = risk[selected], c = '#'+riskColor(p).getHexString();
+    const p = risk[selected], c = '#'+riskColor(p, satFor(selected)).getHexString();
     detailEl.style.borderLeftColor = c;
     detailEl.innerHTML = `<b>${DEFS[selected].name}</b><div class="big" style="color:${c}">${Math.round(p*100)}%</div>${level(p)} predicted probability of stenosis.<br>${DEFS[selected].note}${crossSection(p)}`;
   } else {
@@ -298,7 +300,8 @@ const LABEL = {Age:'Age (years)',Sex:'Male sex',Weight:'Weight (kg)',Length:'Hei
 const pf = document.getElementById('pf'), pf2 = document.getElementById('pf2');
 const cadEl = document.getElementById('cad'), statusEl = document.getElementById('status');
 let META = null, timer = null, EXPL = null, PREV = null, DELTA = {};
-const tier = a => a >= .85 ? 'strong' : a >= .75 ? 'moderate' : 'modest'; const inputs = {};
+const tier = a => a >= .85 ? 'strong' : a >= .75 ? 'moderate' : 'modest';
+const satFor = k => (META && META.reliability && META.reliability[k] && META.reliability[k].auc < .75) ? .38 : .72;   // muted color = modest signal const inputs = {};
 
 // SHAP explanation for the selected vessel (or overall CAD when none is selected)
 function renderWhy(){
@@ -346,6 +349,8 @@ async function predict(){
     if (bad) odd.push(LABEL[c] || c);
   }
   const warn = odd.length ? 'Outside the range seen in the training data: ' + odd.join(', ') + '. Treat this prediction as unreliable.' : '';
+  const total = Object.keys(inputs).length;
+  const changed = Object.keys(inputs).filter(c => inputs[c].type === 'checkbox' ? (inputs[c].checked ? 1 : 0) !== META.defaults[c] : Math.abs(parseFloat(inputs[c].value) - META.defaults[c]) > 1e-9).length;
   try{
     const r = await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({features:f})});
     if (!r.ok) throw new Error('HTTP '+r.status);
@@ -356,7 +361,7 @@ async function predict(){
     statusEl.textContent = warn;
     setRisk({LAD:p.LAD, LCX:p.LCX, RCA:p.RCA});
     const c = '#'+riskColor(p.CAD).getHexString();
-    cadEl.innerHTML = `Overall CAD probability<br><b style="color:${c}">${Math.round(p.CAD*100)}%</b> ${level(p.CAD)}${META.reliability && META.reliability.CAD ? `<br><small>Cross-validated AUC ${META.reliability.CAD.auc.toFixed(2)}: ${tier(META.reliability.CAD.auc)} signal</small>` : ''}`;
+    cadEl.innerHTML = `Overall CAD probability<br><b style="color:${c}">${Math.round(p.CAD*100)}%</b> ${level(p.CAD)}<br><small>${changed} of ${total} inputs differ from the typical (median) patient${changed < 8 ? ' - mostly typical values, so read this as a generic estimate' : ''}</small>${META.reliability && META.reliability.CAD ? `<br><small>Cross-validated AUC ${META.reliability.CAD.auc.toFixed(2)}: ${tier(META.reliability.CAD.auc)} signal</small>` : ''}`;
   } catch(e){ statusEl.textContent = 'Could not get a prediction ('+e.message+').'; }
 }
 async function init(){

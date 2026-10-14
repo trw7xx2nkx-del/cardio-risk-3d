@@ -4,6 +4,8 @@ Multimodal AI Hackathon 2026, Track A (Cardiovascular Risk Visualization & Predi
 
 A web app that predicts overall coronary artery disease (CAD) and significant stenosis (50% or more narrowing) in the three main coronary arteries (LAD, LCX, RCA) from clinical data. It colors an interactive 3D heart by the predicted risk, and explains every prediction with SHAP, per-category totals, plain-language sentences, and a what-if check.
 
+**What the percentages mean.** They are estimated probabilities of coronary disease among patients like those in the training data, whose disease status was confirmed by cardiac catheterization. They are diagnostic-style estimates, not forecasts of future risk.
+
 > **Clinical safety disclaimer.** Predictions are for decision support and education only. They are not a substitute for formal diagnostic imaging or a clinician's judgment. This is a hackathon prototype, not a medical device.
 
 ![App screenshot](docs/figures/app_screenshot.png)
@@ -13,7 +15,8 @@ A web app that predicts overall coronary artery disease (CAD) and significant st
 - **Prediction:** four classifiers (overall CAD, LAD, LCX, RCA) trained on the Extension of the Z-Alizadeh Sani dataset (303 patients), validated with nested cross-validation, and calibrated so percentages match observed rates.
 - **3D heart (Three.js):** an anatomical heart with ventricles, atria, aorta, pulmonary trunk and vena cava. The LAD, LCX and RCA (with side branches) change color from green to red with the predicted probability. Rotate, zoom, and click any artery, chamber or vessel.
 - **Explanations:** per-input SHAP bars, totals by category (symptoms, ECG, echo, blood tests and so on), a plain-language summary, and a what-if line, all computed on the server from fixed templates (no generated text).
-- **Reliability badges:** each vessel carries a badge from its cross-validated ROC-AUC ("strong", "moderate" or "modest signal"), so weaker predictions are not presented with false confidence.
+- **Reliability badges and muted colors:** each vessel carries a badge from its cross-validated ROC-AUC ("strong", "moderate" or "modest signal"), and vessels with only a modest signal are drawn in muted colors, so weaker predictions are not presented with false confidence.
+- **Honesty about inputs:** the result shows how many inputs differ from the typical (median) patient, because unchanged inputs are filled with dataset medians.
 - **Illustrative cross-section:** selecting an artery shows a cutaway where plaque opacity reflects the predicted probability. It is explicitly labeled illustrative, since the dataset has no lesion measurements.
 - **Patient form:** enter values or load an example. Impossible values are blocked, and values outside the training range raise a warning.
 
@@ -86,6 +89,14 @@ The tree models clearly beat the simple baseline only for the LAD. For overall C
 **Subgroups** (`docs/subgroups.csv`, `docs/figures/subgroup_auc.png`): performance is similar for women and men for CAD and LAD. LAD, LCX and RCA weaken in patients aged 60 and older, with wide intervals because the groups are small.
 
 Other figures in `docs/figures/`: `roc.png`, `confusion.png`, `calibration.png`, and `shap_CAD.png`, `shap_LAD.png`, `shap_LCX.png`, `shap_RCA.png`.
+
+## How this fits the track
+
+Track A asks for a system that combines structured clinical data from several sources (demographics and symptoms, ECG findings, echocardiography findings, laboratory values) into predictions, and presents them through a 3D anatomical model, charts and text explanations. This project follows that brief. It does not process raw images, signals or audio.
+
+## Privacy
+
+Entered values are sent to the server only to compute the prediction. The app does not store or log them, but the hosting provider keeps standard request logs. This is a demo: please do not enter real patient information.
 
 ## Limitations
 
