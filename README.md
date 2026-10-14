@@ -128,6 +128,6 @@ docs/                     Figures and metric tables
 
 ## Data, licenses and credits
 
-- Dataset: Extension of the Z-Alizadeh Sani Dataset, UCI Machine Learning Repository. TODO: paste the dataset's citation and license text from its UCI page here.
+- Dataset: Extension of the Z-Alizadeh Sani Dataset, UCI Machine Learning Repository. Cite as: Alizadehsani, R., Roshanzamir, M., & Sani, Z. (2013). extention of Z-Alizadeh sani dataset [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5461K. This dataset is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0) license. (https://creativecommons.org/licenses/by/4.0/legalcode)
 - 3D rendering: [Three.js](https://threejs.org) (MIT), loaded from a CDN. The heart geometry is generated in code, and no third-party 3D model is used.
 - Libraries: scikit-learn, SHAP, FastAPI, pandas, NumPy, Matplotlib.
